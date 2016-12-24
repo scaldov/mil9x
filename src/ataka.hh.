@@ -1,0 +1,63 @@
+#ifndef __ATAKA_HH__
+#define __ATAKA_HH__
+
+#include "hw.h"
+#include "os.hh"
+
+#include "pin.hh"
+#include "timer.hh"
+
+/*
+ * T1C1    PC4  CHNWRK
+ * T1C2    PC6  WRDSTART
+ * T1C3    PC8  WRDSTOP
+ * T1C4    P108 XCHGSTOP
+ * T2C1    PA1  RDY
+ * SSP1TXD PF0  LINE0
+ * SSP2TXD PF15 LINE1
+*/
+
+class ataka {
+public:
+    typedef lk::timer<1> ctrl_bus;
+    typedef ctrl_bus::channel<1> CHNWRK;
+    typedef ctrl_bus::channel<2> WRDSTART;
+    typedef ctrl_bus::channel<3> WRDSTOP;
+    typedef ctrl_bus::channel<4> XCHGSTOP;
+    ataka() {
+        lk::gpio::ioconfig(&lk::ioconf_timer1_ch1_C4);
+        lk::gpio::ioconfig(&lk::ioconf_timer1_ch2_C6);
+        lk::gpio::ioconfig(&lk::ioconf_timer1_ch3_C8);
+        lk::gpio::ioconfig(&lk::ioconf_timer1_ch4_C10);
+        lk::gpio::ioconfig(&lk::ioconf_timer2_ch1_A1);
+        //initialize timer
+        ctrl_bus::enable();
+        ctrl_bus::set::clock(TIMER_HCLKdiv1);
+        ctrl_bus::cnt() = 0;
+        ctrl_bus::psg() = 0;
+        ctrl_bus::arr() = SystemCoreClock / 1_MHz;
+        ctrl_bus::cntrl().CNT_EN = 0;
+        ctrl_bus::cntrl().ARRB_EN = 0;
+        ctrl_bus::cntrl().DIR = 0;
+        ctrl_bus::cntrl().FDTS = 0;
+        ctrl_bus::cntrl().CNT_MODE = 0;
+        ctrl_bus::cntrl().EVENT_SEL = 0;
+        CHNWRK::cntrl().BRKEN = 1;
+        CHNWRK::ccr() = 10;
+
+        ctrl_bus::start();
+        //        RST_CLK_PCLKcmd(RST_CLK_PCLK_TIMER1, ENABLE);
+        //        TIMER_BRGInit(MDR_TIMER1, TIMER_HCLKdiv1);
+        //        TIMER_SetCntAutoreload(MDR_TIMER1, 100);
+        //        TIMER_SetCounterDirection(MDR_TIMER1, TIMER_CntDir_Up);
+        //        TIMER_CounterModeConfig(MDR_TIMER1, TIMER_CntMode_ClkFixedDir);
+        //        TIMER_CntEventSourceConfig(MDR_TIMER1, TIMER_EvSrc_None);
+        //        TIMER_SetCntPrescaler(MDR_TIMER1, 0);
+        //        TIMER_Cmd(MDR_TIMER1, ENABLE);
+    }
+    ~ataka() {
+
+    }
+};
+
+#endif // __ATAKA_HH__

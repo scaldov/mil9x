@@ -1,0 +1,555 @@
+#ifndef TIMER_HH
+#define TIMER_HH
+
+#endif // TIMER_HH
+#ifndef PORT_HH
+#define PORT_HH
+
+#include "hw.hh"
+#include "os.hh"
+
+constexpr uint8_t  Bit0  = (1ul <<  0);
+constexpr uint8_t  Bit1  = (1ul <<  1);
+constexpr uint8_t  Bit2  = (1ul <<  2);
+constexpr uint8_t  Bit3  = (1ul <<  3);
+constexpr uint8_t  Bit4  = (1ul <<  4);
+constexpr uint8_t  Bit5  = (1ul <<  5);
+constexpr uint8_t  Bit6  = (1ul <<  6);
+constexpr uint8_t  Bit7  = (1ul <<  7);
+constexpr uint16_t Bit8  = (1ul <<  8);
+constexpr uint16_t Bit9  = (1ul <<  9);
+constexpr uint16_t Bit10 = (1ul << 10);
+constexpr uint16_t Bit11 = (1ul << 11);
+constexpr uint16_t Bit12 = (1ul << 12);
+constexpr uint16_t Bit13 = (1ul << 13);
+constexpr uint16_t Bit14 = (1ul << 14);
+constexpr uint16_t Bit15 = (1ul << 15);
+constexpr uint32_t Bit16 = (1ul << 16);
+constexpr uint32_t Bit17 = (1ul << 17);
+constexpr uint32_t Bit18 = (1ul << 18);
+constexpr uint32_t Bit19 = (1ul << 19);
+constexpr uint32_t Bit20 = (1ul << 20);
+constexpr uint32_t Bit21 = (1ul << 21);
+constexpr uint32_t Bit22 = (1ul << 22);
+constexpr uint32_t Bit23 = (1ul << 23);
+constexpr uint32_t Bit24 = (1ul << 24);
+constexpr uint32_t Bit25 = (1ul << 25);
+constexpr uint32_t Bit26 = (1ul << 26);
+constexpr uint32_t Bit27 = (1ul << 27);
+constexpr uint32_t Bit28 = (1ul << 28);
+constexpr uint32_t Bit29 = (1ul << 29);
+constexpr uint32_t Bit30 = (1ul << 30);
+constexpr uint32_t Bit31 = (1ul << 31);
+
+/**
+ * Class for holding a register value.
+ * @tparam	T	the (unsigned) underlying integer type: uint8_t, uint16_t, uint32_t
+ * @see Register8, Register16, Register32
+ *
+ * @ingroup	register
+ * @author	Niklas Hauser
+ */
+template< typename T >
+struct Register
+{
+    typedef T UnderlyingType;
+    UnderlyingType value;
+    constexpr Register()
+        :	value(0) {}
+    constexpr operator bool() const
+    { return bool(value); }
+    constexpr bool operator!() const
+    { return not bool(value); }
+protected:
+    constexpr Register(UnderlyingType value)
+        :	value(value) {}
+public:
+    constexpr operator      char16_t() const = delete;
+    constexpr operator      char32_t() const = delete;
+    constexpr operator       wchar_t() const = delete;
+    constexpr operator   signed char() const = delete;
+    constexpr operator unsigned char() const = delete;
+    constexpr operator   signed short int() const = delete;
+    constexpr operator unsigned short int() const = delete;
+    constexpr operator   signed int() const = delete;
+    constexpr operator unsigned int() const = delete;
+    constexpr operator   signed long int() const = delete;
+    constexpr operator unsigned long int() const = delete;
+    constexpr operator   signed long long int() const = delete;
+    constexpr operator unsigned long long int() const = delete;
+    constexpr operator       float() const = delete;
+    constexpr operator      double() const = delete;
+    constexpr operator long double() const = delete;
+};
+
+using Register8  = Register<uint8_t>;
+using Register16 = Register<uint16_t>;
+using Register32 = Register<uint32_t>;
+
+
+/**
+ * Class for operating on a register.
+ *
+ * This class extends the Register base class by adding constructor
+ * and bitwise operation overloading between
+ * a strongly-typed enum and itself.
+ * It is the common base class for Flags, Configurations and Values!
+ *
+ * @tparam	Enum	a strongly-typed enum containing the bit masks
+ * @tparam	T		the underlying integer type to be for internal representation
+ *
+ * @see Flags
+ *
+ * @ingroup	register
+ * @author	Niklas Hauser
+ */
+template < typename Enum, typename T >
+struct FlagsOperators : public Register<T>
+{
+    typedef T UnderlyingType;
+    using Register<T>::value;
+    typedef Enum EnumType;	///< The enum type
+    constexpr FlagsOperators() {}
+    constexpr FlagsOperators(Enum flag) :
+        Register<T>(T(flag)) {}
+    explicit constexpr FlagsOperators(UnderlyingType flag) :
+        Register<T>(flag) {}
+    explicit constexpr FlagsOperators(Register<T> const &o) :
+        Register<T>(o.value) {}
+    constexpr FlagsOperators(FlagsOperators const &o) = default;	///< Copy constructor
+    constexpr FlagsOperators(FlagsOperators &&o) = default;		///< Move constructor
+    FlagsOperators& operator=(FlagsOperators const &o) = default;	///< Copy assignment
+    FlagsOperators& operator=(FlagsOperators &&o) = default;		///< Move assignment
+    static constexpr FlagsOperators mask()	/// returns the mask of the integer type
+    { return FlagsOperators(T(-1)); }
+    constexpr FlagsOperators operator~() const { return FlagsOperators(~value); }
+    constexpr FlagsOperators operator&(FlagsOperators const &o) const { return FlagsOperators(value & o.value); }
+    constexpr FlagsOperators operator|(FlagsOperators const &o) const { return FlagsOperators(value | o.value); }
+    constexpr FlagsOperators operator^(FlagsOperators const &o) const { return FlagsOperators(value ^ o.value); }
+    FlagsOperators& operator&=(FlagsOperators const &o) {  return (value &= o.value, *this); }
+    FlagsOperators& operator|=(FlagsOperators const &o) { return (value |= o.value, *this); }
+    FlagsOperators& operator^=(FlagsOperators const &o) { return (value ^= o.value, *this); }
+    FlagsOperators& operator&=(Enum const &flag) { return operator&=(FlagsOperators(flag)); }
+    FlagsOperators& operator|=(Enum const &flag) { return operator|=(FlagsOperators(flag)); }
+    FlagsOperators& operator^=(Enum const &flag) { return operator^=(FlagsOperators(flag)); }
+    friend constexpr FlagsOperators operator&(Enum const &a, FlagsOperators const &b) { return b & a; }
+    friend constexpr FlagsOperators operator|(Enum const &a, FlagsOperators const &b) { return b | a; }
+    friend constexpr FlagsOperators operator^(Enum const &a, FlagsOperators const &b) { return b ^ a; }
+    constexpr FlagsOperators operator&(Enum const &flag) const { return operator&(FlagsOperators(flag)); }
+    constexpr FlagsOperators operator|(Enum const &flag) const { return operator|(FlagsOperators(flag)); }
+    constexpr FlagsOperators operator^(Enum const &flag) const { return operator^(FlagsOperators(flag)); }
+    constexpr bool operator==(Enum const &flag) const { return value == T(flag); }
+    constexpr bool operator!=(Enum const &flag) const { return value != T(flag); }
+    friend constexpr bool operator==(Enum const &a, FlagsOperators const &b) { return b == a; }
+    friend constexpr bool operator!=(Enum const &a, FlagsOperators const &b) { return b != a; }
+    constexpr bool operator==(FlagsOperators const &o) const { return value == o.value; }
+    constexpr bool operator!=(FlagsOperators const &o) const { return value != o.value; }
+} __attribute__((packed));
+
+/**
+ * Class for operating on a register.
+ *
+ * This class extends the FlagsOperators base class by adding constructor
+ * overloading and convenience functions between
+ * a strongly-typed enum and itself.
+ *
+ * This class makes heavy use of `constexpr`, so that as many values
+ * and operation can take place at compile time for efficiency.
+ *
+ * Unfortunately, you cannot typedef this class directly, you must use
+ * the `XPCC_FLAGS` macro, which add the required external operator overloads
+ * for `Enum OP Enum`.
+ * The macro `XPCC_FLAGS8(Enum)` expands as follows:
+ * @code
+ * typedef xpcc::Flags8<Enum> Enum_t;
+ * XPCC_INT_TYPE_FLAGS(Enum_t);
+ * @endcode
+ *
+ * The `XPCC_FLAGS` macro by default only works in a class or struct, as this is
+ * the primary use-case in xpcc.
+ * To use it outside of a struct, use this:
+ * @code
+ * typedef xpcc::Flags8<Enum> Enum_t;
+ * XPCC_TYPE_FLAGS(Enum_t);
+ * @endcode
+ *
+ * @tparam	Enum	a strongly-typed enum containing the bit masks
+ * @tparam	T		the underlying integer type to be for internal representation
+ *
+ * @see Flags8, Flags16, Flags32
+ * @see XPCC_FLAGS8, XPCC_FLAGS16, XPCC_FLAGS32
+ *
+ * @ingroup	register
+ * @author	Niklas Hauser
+ */
+template < typename Enum, typename T >
+struct Flags : public FlagsOperators<Enum, T>
+{
+    typedef T UnderlyingType;
+    using FlagsOperators<Enum, T>::value;
+    typedef Enum EnumType;	///< The enum type
+    constexpr Flags() {}
+    constexpr Flags(Enum flag) :
+        FlagsOperators<Enum, T>(flag) {}
+
+    constexpr Flags(FlagsOperators<Enum, T> const &flag) :
+        FlagsOperators<Enum, T>(flag) {}
+
+    /// When explicitly called, this class constructs itself out of the underlying type
+    explicit constexpr Flags(UnderlyingType flag) :
+        FlagsOperators<Enum, T>(flag) {}
+
+    /// When explicitly called, this class constructs itself out of the superclass
+    explicit constexpr Flags(Register<T> const &o) :
+        FlagsOperators<Enum, T>(o) {}
+
+    constexpr Flags(Flags const &o) = default;	///< Copy constructor
+    constexpr Flags(Flags &&o) = default;		///< Move constructor
+    /// @}
+
+    /// @{
+    Flags& operator=(Flags const &o) = default;	///< Copy assignment
+    Flags& operator=(Flags &&o) = default;		///< Move assignment
+    /// @}
+
+    /// @{
+    // MARK: convenience methods
+    /// Sets a single bit.
+    inline void set(Enum const &flag)
+    { *this |= flag; }
+    /// Sets multiple bits.
+    inline void set(Flags const &o)
+    { *this |= o; }
+
+    /// Clears a single bit.
+    inline void reset(Enum const &flag)
+    { *this &= ~flag; }
+    /// Clears multiple bits.
+    inline void reset(Flags const &o)
+    { *this &= ~o; }
+
+    /// Toggles a single bit.
+    inline void toggle(Enum const &flag)
+    { *this ^= flag; }
+    /// Toggles multiple bits.
+    inline void toggle(Flags const &o)
+    { *this ^= o; }
+
+    /// Sets a single bit, when `value` is true, clears it otherwise
+    inline void update(Enum const &flag, bool value)
+    {
+        if (value) *this |= flag;
+        else *this &= ~flag;
+    }
+    /// Sets multiple bits, when `value` is true, clears them otherwise
+    inline void update(Flags const &o, bool value)
+    {
+        if (value) *this |= o;
+        else *this &= ~o;
+    }
+    /// @}
+
+    /// @{
+
+    /// Returns `true` if bit is set
+    constexpr bool all(Enum const &flag) const
+    { return (*this & flag); }
+    /// Returns `true` if bit is set
+    constexpr bool any(Enum const &flag) const
+    { return (*this & flag); }
+    /// Returns `true` if bit is **not** set
+    constexpr bool none(Enum const &flag) const
+    { return !(*this & flag); }
+    /// @}
+
+    /// @{
+
+    /// Returns `true` if **all** of the passed bits are set
+    constexpr bool all(Flags const &o) const
+    { return (*this & o) == o; }
+    /// Returns `true` if **any** of the passed bits are set
+    constexpr bool any(Flags const &o) const
+    { return *this & o; }
+    /// Returns `true` if **none** of the passed bits are set
+    constexpr bool none(Flags const &o) const
+    { return (*this & o).value == 0; }
+    /// @}
+} __attribute__((packed));
+
+/// @ingroup	register
+/// @{
+template < typename Enum = uint8_t >
+using Flags8 = Flags<Enum, uint8_t>;	///< Flags class with  8-bit wide underlying type
+template < typename Enum = uint16_t >
+using Flags16 = Flags<Enum, uint16_t>;	///< Flags class with 16-bit wide underlying type
+template < typename Enum = uint32_t >
+using Flags32 = Flags<Enum, uint32_t>;	///< Flags class with 32-bit wide underlying type
+/// @}
+
+
+/// @cond
+template < typename... T >
+struct FlagsGroup {} __attribute__((packed));
+
+
+template < typename T, typename... Ts >
+struct FlagsGroup<T, Ts...> : public FlagsGroup<Ts...>
+{
+    // use inherited constructors
+    using FlagsGroup<Ts...>::FlagsGroup;
+
+    /// empty constructor initializes `value` to zero
+    constexpr FlagsGroup() {};
+
+    // enum class
+    constexpr FlagsGroup(typename T::EnumType value)
+        :	FlagsGroup<Ts...>(typename T::UnderlyingType(value)) {}
+    // Flags class
+    constexpr FlagsGroup(T value)
+        :	FlagsGroup<Ts...>(value.value) {}
+} __attribute__((packed));
+/// @endcond
+
+/**
+ * Class for grouping several Flags classes together.
+ *
+ * This variadic template class allows you to create a type
+ * which provides constructor overloads for the provided types.
+ *
+ * This will allow you to cast the passed Flags classes into one
+ * class, but not other classes.
+ * Notice that this cast destroys type information (naturally)
+ * and therefore you cannot use any of the Flags classes type-safe
+ * operator overloads.
+ * The same reasoning applies here as in the Register class.
+ *
+ * @tparam	T... the Flags classes to be grouped. Must all have the same underlying types.
+ *
+ * @ingroup	register
+ * @author	Niklas Hauser
+ */
+#ifdef __DOXYGEN__
+template < typename T... >
+struct FlagsGroup<T...> : public Register<T::UnderlyingType>
+        #else
+template < typename T >
+struct FlagsGroup<T> : public Register<typename T::UnderlyingType>
+        #endif
+{
+    /// default constructor initializes `value` to zero
+    constexpr FlagsGroup() {}
+
+    /// copy constructor
+    constexpr FlagsGroup(FlagsGroup const &o)
+        :	Register<typename T::UnderlyingType>(o.value) {}
+    /// explicit underlying type constructor
+    explicit constexpr FlagsGroup(typename T::UnderlyingType value)
+        : 	Register<typename T::UnderlyingType>(value) {}
+
+    /// enum type constructor
+    constexpr FlagsGroup(typename T::EnumType value)
+        :	Register<typename T::UnderlyingType>(typename T::UnderlyingType(value)) {}
+    /// Flags type constructor
+    constexpr FlagsGroup(T value)
+        :	Register<typename T::UnderlyingType>(value.value) {}
+} __attribute__((packed));
+
+/**
+ * Class for accessing a configuration in a register.
+ *
+ * A configuration is a combination of bits, whose meaning is different from their
+ * numerical value.
+ *
+ * @tparam	Parent		the Flags class to which this configuration belongs to
+ * @tparam	Enum		a strongly-typed enum containing the configuration values
+ * @tparam	Mask		the (unshifted) bit mask corresponding to the enum values
+ * @tparam	Position	how many bits the configuration values need to be shifted
+ *
+ * @ingroup	register
+ * @author	Niklas Hauser
+ */
+template < typename Parent, typename Enum, typename Parent::UnderlyingType Mask, typename Parent::UnderlyingType Position = 0 >
+struct Configuration : public FlagsOperators<typename Parent::EnumType, typename Parent::UnderlyingType>
+{
+private:
+    typedef typename Parent::UnderlyingType UnderlyingType;
+    typedef UnderlyingType UType;	// lazy
+    typedef typename Parent::EnumType EType;	// lazy
+
+public:
+    /// explicit constructor for the underlying type
+    explicit constexpr Configuration(UnderlyingType config) :
+        FlagsOperators<EType, UType>(config << Position) {}
+    /// explicit constructor for the enum type
+    explicit constexpr Configuration(Enum config) :
+        FlagsOperators<EType, UType>(UType(config) << Position) {}
+
+    /// copy constructor
+    constexpr Configuration(Configuration const &o) = default;
+    /// move constructor
+    constexpr Configuration(Configuration &&o) = default;
+
+    /// @{
+
+    /// clears and sets a new configuration in a Flags register
+    static inline void set(Parent &parent, Enum config)
+    {	parent.value = (parent.value & ~(Mask << Position)) | (UType(config) << Position); }
+
+    /// clears the configuration in a Flags register
+    static inline void reset(Parent &parent)
+    {	parent.value &= ~(Mask << Position); }
+
+    /// returns the configuration from a Flags register
+    static constexpr Enum get(Parent const &parent)
+    {	return Enum((parent.value & (Mask << Position)) >> Position); }
+    /// @}
+
+    /// returns the shifted mask for this configuration
+    static constexpr Parent mask()
+    { return Parent((Mask << Position)); }
+
+    /// @cond
+    constexpr operator Parent() const
+    {	return Parent(FlagsOperators<EType, UType>::value); }
+    /// @endcond
+} __attribute__((packed));
+
+/**
+ * Class for accessing a numeric value in a register.
+ *
+ * A value is a combination of bits which correspond to their numerical value.
+ * An example is a 3-bit wide bit field corresponding to the start-up delay in ms.
+ *
+ * The value class is similar to the configuration class, but a lot simpler.
+ * No enum type is needed, instead the underlying type of the parent register class
+ * is used for setting and getting the value.
+ *
+ * @code
+ * typedef Value< Control_t, 3, 1 >  Delay_t;
+ * @endcode
+ *
+ * @tparam	Parent		the Flags class to which this configuration belongs to
+ * @tparam	Width		the width in bits of the value in the register
+ * @tparam	Position	how many bits the configuration values need to be shifted
+ *
+ * @ingroup	register
+ * @author	Niklas Hauser
+ */
+template < typename Parent, typename Parent::UnderlyingType Width, typename Parent::UnderlyingType Position = 0 >
+struct Value : public FlagsOperators<typename Parent::EnumType, typename Parent::UnderlyingType>
+{
+private:
+    typedef typename Parent::UnderlyingType UnderlyingType;
+    typedef UnderlyingType UType;	// lazy
+    typedef typename Parent::EnumType EType;	// lazy
+
+    static constexpr UType Mask = ((1 << Width) - 1) << Position;
+public:
+    /// explicit constructor for the underlying type
+    explicit constexpr Value(UnderlyingType config) :
+        FlagsOperators<EType, UType>((config << Position) & Mask) {}
+
+    /// copy constructor
+    constexpr Value(Value const &o) = default;
+    /// move constructor
+    constexpr Value(Value &&o) = default;
+
+    /// @{
+
+    /// clears and sets a new value in a Flags register
+    static inline void set(Parent &parent, UnderlyingType config)
+    {	parent.value = (parent.value & ~Mask) | ((config << Position) & Mask); }
+
+    /// clears the value in a Flags register
+    static inline void reset(Parent &parent)
+    {	parent.value &= ~Mask; }
+
+    /// returns the value from a Flags register
+    static constexpr UType get(Parent const &parent)
+    {	return (parent.value & Mask) >> Position; }
+    /// @}
+
+    /// returns the shifted mask for this value
+    static constexpr Parent mask()
+    { return Parent(Mask); }
+
+    /// @cond
+    constexpr operator Parent() const
+    {	return Parent(FlagsOperators<EType, UType>::value); }
+    /// @endcond
+} __attribute__((packed));
+
+
+
+class Port {
+public:
+    typedef Bit<30, 2, 0b00> DST_INC_BYTE;
+    enum class EventSel {
+        Front = 0,
+        Timer1ARR, Timer2ARR, Timer3ARR,
+        Chn1, Chn2, Chn3, Chn4,
+        ETR
+    };
+    enum class CntMode {
+        ClkFixedDir = 0, ClkAltDir,
+        EvtFixedDir, EvtAltDir
+    };
+    enum class FDTS {
+        Div1 = 0,
+        Div2, Div3, Div4
+    };
+    enum class Dir {
+        Up = 0, Down
+    };
+    enum class WrCmpl {
+        Ready = 0, Busy
+    };
+    enum class ARRBEN {
+        Instant = 0, Delayed
+    };
+    enum class CNT_EN {
+        Disable = 0, Enable
+    };
+    typedef Flags32<EventSel> EventSel_t;
+    enum Chn {
+        UART1_TX = 0,
+        UART1_RX, UART2_TX, UART2_RX,
+        SSP1_TX, SSP1_RX, SSP2_TX, SSP2_RX,
+        ADC1, ADC2,
+        TIM1, TIM2, TIM3
+    };
+    struct PortRegisters
+    {
+        struct Status{
+            void operator=(uint32_t v) {*(uint32_t*)this = v;}
+            uint32_t masterEnable:1;
+            uint32_t unused0:3;
+            uint32_t state:4;
+            uint32_t unused1:8;
+            uint32_t chnlsMinus1:5;
+            uint32_t unused2:7;
+            uint32_t testStatus:4;
+        };
+        struct Cfg{
+            void operator=(uint32_t v) {*(uint32_t*)this = v;}
+            uint32_t masterEnable:1;
+            uint32_t unused0:4;
+            uint32_t chnProtCtrl:3;
+            uint32_t unused1:24;
+        };
+        volatile uint32_t rxTx;
+        volatile uint32_t oe;
+        volatile uint32_t func;
+        volatile uint32_t analog;
+        volatile uint32_t pull;
+        volatile uint32_t pd;
+        volatile uint32_t pwr;
+        volatile uint32_t gfen;
+    };
+};
+
+#define Timer1 reinterpret_cast<DMA::TimerRegisters*>MDR_TIMER1_BASE
+#define Timer2 reinterpret_cast<DMA::TimerRegisters*>MDR_TIMER2_BASE
+#define Timer3 reinterpret_cast<DMA::TimerRegisters*>MDR_TIMER3_BASE
+
+#endif // PORT_HH

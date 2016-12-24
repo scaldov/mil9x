@@ -1,0 +1,241 @@
+#ifndef __LK_TIMER_HH__
+#define __LK_TIMER_HH__
+
+#include "hw.hh"
+#include "gpio.hh"
+
+#include <stdio.h>
+
+namespace lk {
+
+template <int index> class timer {
+public:
+    struct CNTRL{
+        uint32_t CNT_EN:1;
+        uint32_t ARRB_EN:1;
+        uint32_t WR_CMPL:1;
+        uint32_t DIR:1;
+        uint32_t FDTS:2;
+        uint32_t CNT_MODE:2;
+        uint32_t EVENT_SEL:4;
+    };
+    static MDR_TIMER_TypeDef* dev() {
+        if(index == 1) return MDR_TIMER1;
+        if(index == 2) return MDR_TIMER2;
+        if(index == 3) return MDR_TIMER3;
+    }
+    static volatile uint32_t& cnt() {
+        return dev()->CNT;
+    }
+    static volatile uint32_t& psg() {
+        return dev()->PSG;
+    }
+    static volatile uint32_t& arr() {
+        return dev()->ARR;
+    }
+    static volatile CNTRL& cntrl() {
+        return (volatile CNTRL&)dev()->CNTRL;
+    }
+    static void start() {
+        cntrl().CNT_EN = 1;
+    }
+    static void stop() {
+        cntrl().CNT_EN = 0;
+    }
+
+    static int enable() {
+        if(index == 1) RST_CLK_PCLKcmd(RST_CLK_PCLK_TIMER1, ENABLE);
+        if(index == 2) RST_CLK_PCLKcmd(RST_CLK_PCLK_TIMER2, ENABLE);
+        if(index == 3) RST_CLK_PCLKcmd(RST_CLK_PCLK_TIMER3, ENABLE);
+        return 0;
+    }
+    static int disable() {
+        if(index == 1) RST_CLK_PCLKcmd(RST_CLK_PCLK_TIMER1, DISABLE);
+        if(index == 2) RST_CLK_PCLKcmd(RST_CLK_PCLK_TIMER2, DISABLE);
+        if(index == 3) RST_CLK_PCLKcmd(RST_CLK_PCLK_TIMER3, DISABLE);
+        return 0;
+    }
+    class set {
+    public:
+        static void clock(int value) {
+            TIMER_BRGInit(dev(), value);
+        }
+        static void prescaler(int value) {
+            dev()->PSG = value;
+        }
+        static void autoreload(int value) {
+            dev()->ARR = value;
+        }
+    };
+
+    template <int chn_i> class channel {
+    public:
+        struct CNTRL{
+            union {
+                uint32_t value;
+                uint32_t CHFLTR:4;
+            };
+            uint32_t CHSEL:2;
+            uint32_t CHPSC:2;
+            uint32_t OCCE:1;
+            uint32_t OCCM:3;
+            uint32_t BRKEN:1;
+            uint32_t ETREN:1;
+            uint32_t WR_CMPL:1;
+            uint32_t CAP_nPWM:1;
+        };
+        struct CNTRL1{
+            uint32_t SELOE:2;
+            uint32_t SELO:2;
+            uint32_t INV:1;
+            uint32_t U7_5:3;
+            uint32_t NSELOE:2;
+            uint32_t NSELO:2;
+            uint32_t NINV:1;
+        };
+        struct CNTRL2{
+            union {
+                uint32_t value;
+                uint32_t CHSEL:2;
+            };
+            uint32_t CCR1_EN:1;
+            uint32_t CCRRLD:1;
+        };
+        struct DTG2{
+            uint32_t DTGx:4;
+            uint32_t EDTS:1;
+            uint32_t U7_5:3;
+            uint32_t DTG:8;
+        };
+        static volatile uint32_t& ccr() {
+            if(chn_i == 1) return dev()->CCR1;
+            if(chn_i == 2) return dev()->CCR2;
+            if(chn_i == 3) return dev()->CCR3;
+            if(chn_i == 4) return dev()->CCR4;
+        }
+        static volatile uint32_t& ccr1() {
+            if(chn_i == 1) return dev()->CCR11;
+            if(chn_i == 2) return dev()->CCR21;
+            if(chn_i == 3) return dev()->CCR31;
+            if(chn_i == 4) return dev()->CCR41;
+        }
+        static volatile CNTRL& cntrl() {
+            if(chn_i == 1) return (volatile CNTRL&)dev()->CH1_CNTRL;
+            if(chn_i == 2) return (volatile CNTRL&)dev()->CH2_CNTRL;
+            if(chn_i == 3) return (volatile CNTRL&)dev()->CH3_CNTRL;
+            if(chn_i == 4) return (volatile CNTRL&)dev()->CH4_CNTRL;
+        }
+        static volatile CNTRL1& cntrl1() {
+            if(chn_i == 1) return (volatile CNTRL1&)dev()->CH1_CNTRL1;
+            if(chn_i == 2) return (volatile CNTRL1&)dev()->CH2_CNTRL1;
+            if(chn_i == 3) return (volatile CNTRL1&)dev()->CH3_CNTRL1;
+            if(chn_i == 4) return (volatile CNTRL1&)dev()->CH4_CNTRL1;
+        }
+        static volatile CNTRL2& cntrl2() {
+            if(chn_i == 1) return (volatile CNTRL2&)dev()->CH1_CNTRL2;
+            if(chn_i == 2) return (volatile CNTRL2&)dev()->CH2_CNTRL2;
+            if(chn_i == 3) return (volatile CNTRL2&)dev()->CH3_CNTRL2;
+            if(chn_i == 4) return (volatile CNTRL2&)dev()->CH4_CNTRL2;
+        }
+        static volatile uint32_t& dtg() {
+            if(chn_i == 1) return dev()->CH1_DTG;
+            if(chn_i == 2) return dev()->CH2_DTG;
+            if(chn_i == 3) return dev()->CH3_DTG;
+            if(chn_i == 4) return dev()->CH4_DTG;
+        }
+        //            class set {
+        //            public:
+        //                static void compare_capture_reg(int value) {
+        //                    ccr()[0] = value;
+        //                }
+        //                static void compare_capture_reg1(int value) {
+        //                    ccr1()[0] = value;
+        //                }
+        //                static void dead_time_gen(int value) {
+        //                    ccr1()[0] = value;
+        //                }
+        //            };
+    };
+};
+
+extern const ioconf ioconf_timer1_ch1_C4;
+extern const ioconf ioconf_timer1_ch1n_C5;
+extern const ioconf ioconf_timer1_ch2_C6;
+extern const ioconf ioconf_timer1_ch2n_C7;
+extern const ioconf ioconf_timer1_ch3_C8;
+extern const ioconf ioconf_timer1_ch3n_C9;
+extern const ioconf ioconf_timer1_ch4_C10;
+extern const ioconf ioconf_timer1_ch4n_C11;
+extern const ioconf ioconf_timer1_etr_C12;
+extern const ioconf ioconf_timer1_blk_C13;
+
+extern const ioconf ioconf_timer1_ch1_F6;
+extern const ioconf ioconf_timer1_ch1n_F7;
+extern const ioconf ioconf_timer1_ch2_F8;
+extern const ioconf ioconf_timer1_ch2n_F9;
+extern const ioconf ioconf_timer1_ch3_F10;
+extern const ioconf ioconf_timer1_ch3n_F11;
+extern const ioconf ioconf_timer1_ch4_F12;
+extern const ioconf ioconf_timer1_ch4n_F13;
+extern const ioconf ioconf_timer1_etr_F14;
+extern const ioconf ioconf_timer1_blk_F15;
+
+extern const ioconf ioconf_timer1_ch1_A1;
+extern const ioconf ioconf_timer1_ch1n_A2;
+extern const ioconf ioconf_timer1_ch2_A3;
+extern const ioconf ioconf_timer1_ch2n_A4;
+extern const ioconf ioconf_timer1_ch3_A5;
+extern const ioconf ioconf_timer1_ch3n_A8;
+extern const ioconf ioconf_timer1_ch4_A9;
+extern const ioconf ioconf_timer1_ch4n_A13;
+extern const ioconf ioconf_timer1_blk_A14;
+extern const ioconf ioconf_timer1_etr_A15;
+
+extern const ioconf ioconf_timer1_ch1_D1;
+extern const ioconf ioconf_timer1_ch1n_D0;
+extern const ioconf ioconf_timer1_etr_D4;
+extern const ioconf ioconf_timer1_blk_D7;
+extern const ioconf ioconf_timer1_ch4n_D8;
+extern const ioconf ioconf_timer1_ch2_D10;
+extern const ioconf ioconf_timer1_ch2n_D11;
+extern const ioconf ioconf_timer1_ch3_D12;
+extern const ioconf ioconf_timer1_ch3n_D13;
+extern const ioconf ioconf_timer1_ch4_D14;
+
+extern const ioconf ioconf_timer2_ch1_A1;
+extern const ioconf ioconf_timer2_ch1n_A2;
+extern const ioconf ioconf_timer2_ch2_A3;
+extern const ioconf ioconf_timer2_ch2n_A4;
+extern const ioconf ioconf_timer2_ch3_A5;
+extern const ioconf ioconf_timer2_ch3n_A8;
+extern const ioconf ioconf_timer2_ch4_A9;
+extern const ioconf ioconf_timer2_ch4n_A10;
+extern const ioconf ioconf_timer2_blk_A11;
+extern const ioconf ioconf_timer2_etr_A12;
+
+extern const ioconf ioconf_timer2_ch1_E0;
+extern const ioconf ioconf_timer2_ch1n_E1;
+extern const ioconf ioconf_timer2_ch2_E9;
+extern const ioconf ioconf_timer2_ch2n_E10;
+extern const ioconf ioconf_timer2_ch3_E2;
+extern const ioconf ioconf_timer2_ch3n_E3;
+extern const ioconf ioconf_timer2_ch4_E8;
+extern const ioconf ioconf_timer2_ch4n_E4;
+extern const ioconf ioconf_timer2_blk_E5;
+extern const ioconf ioconf_timer2_etr_E14;
+
+extern const ioconf ioconf_timer2_ch1n_D9;
+extern const ioconf ioconf_timer2_blk_D6;
+extern const ioconf ioconf_timer2_etr_D5;
+extern const ioconf ioconf_timer2_ch2n_D3;
+extern const ioconf ioconf_timer2_ch2_D2;
+extern const ioconf ioconf_timer2_ch1_D8;
+extern const ioconf ioconf_timer2_ch2_D10;
+extern const ioconf ioconf_timer2_ch2n_D11;
+extern const ioconf ioconf_timer2_ch3_D12;
+extern const ioconf ioconf_timer2_ch3n_D13;
+extern const ioconf ioconf_timer2_ch4_D14;
+
+}
+
+#endif // __LK_TIMER_HH__

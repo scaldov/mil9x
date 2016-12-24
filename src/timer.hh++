@@ -1,0 +1,248 @@
+#ifndef TIMER_HH
+#define TIMER_HH
+
+#include "hw.hh"
+#include "os.hh"
+
+
+template <uint32_t base, int offset = 0, int stride = 0> class BitAccess {
+public:
+};
+
+template <uint32_t base, int offset = 0, int stride = 0> class RegAccess {
+public:
+    int index;
+    constexpr RegAccess() : index(0){
+    }
+    explicit constexpr RegAccess(int index) : index(index){
+    }
+    constexpr RegAccess(RegAccess const &o) = default;        ///< Copy constructor
+    constexpr RegAccess(RegAccess &&o) = default;             ///< Move constructor
+    RegAccess& operator=(RegAccess const &o) = default;       ///< Copy assignment
+    RegAccess& operator=(RegAccess &&o) = delete;            ///< Move assignment
+    void inline constexpr operator=(unsigned long int val) {
+        volatile uint32_t* dev = reinterpret_cast<uint32_t*> (base + offset + index * stride);
+        printf("!!!!!!\n");
+        printf("%08x\t%08x\t%08x\t%08x\n", base, offset, stride, val);
+        *dev = val;
+    }
+    void inline constexpr operator=(Bit1 val) {
+        volatile uint32_t* dev = reinterpret_cast<uint32_t*> (base + offset + index * stride);
+        printf("++++++\n");
+        printf("%08x\t%08x\t%08x\n", base, offset, stride);
+        *dev = val.bits();
+    }
+    constexpr RegAccess operator[](int val) const {
+        //        RegAccess<base, offset, stride> r(val);
+        //        return r;
+        return RegAccess<base, offset, stride>(val);
+    }
+    explicit operator int() {
+        printf("explicit operator int\n");
+        printf("%08x\t%08x\t%08x\tindex=%i\n", base, offset, stride, index);
+        return reinterpret_cast<uint32_t*> (base + offset + index * stride)[0];
+    }
+};
+
+template <uint32_t base> class RegMap {
+public:
+    int offset;
+    constexpr RegMap() : offset(0){
+    }
+    explicit constexpr RegMap(int offset) : offset(offset){
+    }
+    constexpr RegMap(RegMap const &o) = default;        ///< Copy constructor
+    constexpr RegMap(RegMap &&o) = default;             ///< Move constructor
+    RegMap& operator=(RegMap const &o) = default;       ///< Copy assignment
+    RegMap& operator=(RegMap &&o) = delete;            ///< Move assignment
+    void inline constexpr operator=(unsigned long int val) {
+        volatile uint32_t* dev = reinterpret_cast<uint32_t*> (base + offset);
+//        printf("[]\n");
+//        printf("%08x\t%08x\t%08x\n", base, offset, val);
+        *dev = val;
+    }
+    void inline constexpr operator=(Bit1 val) {
+        volatile uint32_t* dev = reinterpret_cast<uint32_t*> (base + offset);
+//        printf("{}\n");
+//        printf("%08x\t%08x\t%08x\n", base, offset, val);
+        *dev = val.bits();
+    }
+    constexpr explicit operator int() {
+//        printf("explicit operator int\n");
+//        printf("%08x\t%08x\n", base, offset);
+        return reinterpret_cast<uint32_t*> (base + offset)[0];
+    }
+};
+
+//class Register {
+//public:
+//    uint32_t addr;
+//    constexpr Register(uint32_t addr) : addr(addr) {}
+//    void inline constexpr operator=(unsigned long int val){
+//        *reinterpret_cast<volatile uint32_t*>(addr) = val;
+//    }
+//};
+
+class Timer {
+public:
+    static constexpr auto bfEventSel = BitAttr(8,4);
+    struct EventSel {
+        static constexpr auto front = Bit1(bfEventSel, 0xa5a5a);
+        BITDEFX(Front, 8, 4, 0);
+        BITDEFX(ARR1, 8, 4, 1);
+        BITDEFX(ARR2, 8, 4, 2);
+        BITDEFX(ARR3, 8, 4, 3);
+        BITDEFX(CHN1, 8, 4, 4);
+        BITDEFX(CHN2, 8, 4, 5);
+        BITDEFX(CHN3, 8, 4, 6);
+        BITDEFX(CHN4, 8, 4, 7);
+        BITDEFX(ETR, 8, 4, 8);
+    };
+    struct CntMode {
+        BITDEFX(ClkFixedDir, 6, 2, 0);
+        BITDEFX(ClkAltDir, 6, 2, 1);
+        BITDEFX(EvtFixedDir, 6, 2, 2);
+        BITDEFX(EvtAltDir, 6, 2, 3);
+    };
+    struct FDTS {
+        BITDEFX(Div1, 4, 2, 0);
+        BITDEFX(Div2, 4, 2, 1);
+        BITDEFX(Div3, 4, 2, 2);
+        BITDEFX(Div4, 4, 2, 3);
+    };
+    struct Dir {
+        BITDEFX(Up, 3, 1, 0);
+        BITDEFX(Down, 3, 1, 1);
+    };
+    struct WrCmpl {
+        BITDEFX(Ready, 2, 1, 0);
+        BITDEFX(Busy, 2, 1, 1);
+    };
+    struct ARRBEn {
+        BITDEFX(Instant, 1, 1, 0);
+        BITDEFX(Delayed, 1, 1, 1);
+    };
+    struct CntEn {
+        BITDEFX(Disable, 2, 1, 0);
+        BITDEFX(Enable, 2, 1, 1);
+    };
+    //    template <typename T> class Register {
+    struct Registers
+    {
+        //        static constexpr Register ARR = Register(MDR_TIMER1_BASE + 8);
+        volatile uint32_t cnt;
+        volatile uint32_t psg;
+        volatile uint32_t arr;
+        struct {
+            //            void operator=(uint32_t v) volatile {*const_cast<uint32_t*>(reinterpret_cast<volatile uint32_t*>(this)) = v;}
+            void operator=(uint32_t v) volatile {*(uint32_t*)this = v;}
+            uint32_t cntEn:1;
+            uint32_t arrbEn:1;
+            uint32_t wrCmpl:1;
+            uint32_t dir:1;
+            uint32_t fdts:2;
+            uint32_t cntMode:2;
+            uint32_t eventSel:4;
+            uint32_t unused:20;
+        } volatile cntrl;
+//        volatile Cntrl cntrl;
+        volatile uint32_t CCR[4];
+        volatile uint32_t chnCntrl[4];
+        volatile uint32_t chnCntrl1[4];
+        volatile uint32_t chnDTG[4];
+        volatile uint32_t brkEtrCntrl;
+        volatile uint32_t status;
+        volatile uint32_t ie;
+        volatile uint32_t dmaRE;
+        volatile uint32_t chnCntrl2[4];
+        volatile uint32_t CCR1[4];
+    };
+};
+
+
+
+template <uint32_t BaseAddr> class Timerx {
+public:
+    static constexpr auto bfEventSel = BitAttr(8,4);
+    struct EventSel {
+        BITDEF(Front, bfEventSel, 0);
+        BITDEF(ARR1, bfEventSel, 1);
+        BITDEF(ARR2, bfEventSel, 2);
+        BITDEF(ARR3, bfEventSel, 3);
+        BITDEF(CHN1, bfEventSel, 4);
+        BITDEF(CHN2, bfEventSel, 5);
+        BITDEF(CHN3, bfEventSel, 6);
+        BITDEF(CHN4, bfEventSel, 7);
+        BITDEF(ETR, bfEventSel, 8);
+    };
+    static constexpr auto bfCntMode = BitAttr(6,2);
+    struct CntMode {
+        BITDEF(ClkFixedDir, bfCntMode, 0);
+        BITDEF(ClkAltDir, bfCntMode, 1);
+        BITDEF(EvtFixedDir, bfCntMode, 2);
+        BITDEF(EvtAltDir, bfCntMode, 3);
+    };
+    static constexpr auto bfFDTS = BitAttr(4,2);
+    struct FDTS {
+        BITDEF(Div1, bfFDTS, 0);
+        BITDEF(Div2, bfFDTS, 1);
+        BITDEF(Div3, bfFDTS, 2);
+        BITDEF(Div4, bfFDTS, 3);
+    };
+    static constexpr auto bfDir = BitAttr(3,1);
+    struct Dir {
+        BITDEF(Up, bfDir, 0);
+        BITDEF(Down, bfDir, 1);
+    };
+    static constexpr auto bfWrCmpl = BitAttr(2,1);
+    struct WrCmpl {
+        BITDEF(Ready, bfWrCmpl, 0);
+        BITDEF(Busy, bfWrCmpl, 1);
+    };
+    static constexpr auto bfARRBEn = BitAttr(1,1);
+    struct ARRBEn {
+        BITDEF(Instant, bfARRBEn, 0);
+        BITDEF(Delayed, bfARRBEn, 1);
+    };
+    static constexpr auto bfCntEn = BitAttr(0,1);
+    struct CntEn {
+        BITDEF(Disable, bfCntEn, 0);
+        BITDEF(Enable, bfCntEn, 1);
+    };
+    static constexpr auto cnt = RegMap<BaseAddr>(0x00);
+    static constexpr auto psg = RegMap<BaseAddr>(0x04);
+    static constexpr auto arr = RegMap<BaseAddr>(0x08);
+    static constexpr auto cntrl = RegMap<BaseAddr>(0x0C);
+//    static constexpr RegMap<BaseAddr> ccr[4][2]  = {RegMap<BaseAddr>(0x10), RegMap<BaseAddr>(0x70),
+//                                                    RegMap<BaseAddr>(0x14), RegMap<BaseAddr>(0x74),
+//                                                    RegMap<BaseAddr>(0x18), RegMap<BaseAddr>(0x78),
+//                                                    RegMap<BaseAddr>(0x1c), RegMap<BaseAddr>(0x7c)};
+    static RegMap<BaseAddr> ccr[4][2];
+    static RegMap<BaseAddr> ccrx[8];
+//    static constexpr RegMap<BaseAddr> ccr[4][2]  = {{RegMap<BaseAddr>(0x10), RegMap<BaseAddr>(0x70)},
+//                                                    {RegMap<BaseAddr>(0x14), RegMap<BaseAddr>(0x74)},
+//                                                    {RegMap<BaseAddr>(0x18), RegMap<BaseAddr>(0x78)},
+//                                                    {RegMap<BaseAddr>(0x1c), RegMap<BaseAddr>(0x7c)}};
+//    static RegMap<BaseAddr> ccr[4][2];
+};
+
+template <uint32_t BaseAddr> RegMap<BaseAddr> Timerx<BaseAddr>::ccrx[8]  = {RegMap<BaseAddr>(0x10), RegMap<BaseAddr>(0x70),
+                                                RegMap<BaseAddr>(0x14), RegMap<BaseAddr>(0x74),
+                                                RegMap<BaseAddr>(0x18), RegMap<BaseAddr>(0x78),
+                                                RegMap<BaseAddr>(0x1c), RegMap<BaseAddr>(0x7c)};
+
+template <uint32_t BaseAddr> RegMap<BaseAddr> Timerx<BaseAddr>::ccr[4][2]  = {RegMap<BaseAddr>(0x10), RegMap<BaseAddr>(0x70),
+                                                                              RegMap<BaseAddr>(0x14), RegMap<BaseAddr>(0x74),
+                                                                              RegMap<BaseAddr>(0x18), RegMap<BaseAddr>(0x78),
+                                                                              RegMap<BaseAddr>(0x1c), RegMap<BaseAddr>(0x7c)};
+
+//#define Timer1 reinterpret_cast<volatile Timer::Registers*>MDR_TIMER1_BASE
+//#define Timer2 reinterpret_cast<volatile Timer::Registers*>MDR_TIMER2_BASE
+//#define Timer3 reinterpret_cast<volatile Timer::Registers*>MDR_TIMER3_BASE
+
+#define timer1 Timerx<0x20001000>
+#define Timer1 ((volatile Timer::Registers*)MDR_TIMER1_BASE)
+#define Timer2 ((volatile Timer::Registers*)MDR_TIMER2_BASE)
+#define Timer3 ((volatile Timer::Registers*)MDR_TIMER3_BASE)
+
+#endif
