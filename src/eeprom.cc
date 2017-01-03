@@ -10,12 +10,12 @@ void eeprom::erase_page_sector(uint32_t addr, uint32_t flag)
     uint32_t cmd = MDR_EEPROM->CMD & EEPROM_CMD_DELAY_Msk;
     __disable_irq();
     systick::begin();
-    EEPROM(0).key = EEPROM::KEY;
-    EEPROM(0).cmd = EEPROM::CMD::CON;
-    EEPROM(0).addr = addr;
-    EEPROM(0).cmd &= ~(EEPROM::CMD::XE | EEPROM::CMD::YE | EEPROM::CMD::SE | EEPROM::CMD::MAS1 |
+    EEPROM().key = EEPROM::KEY;
+    EEPROM().cmd = EEPROM::CMD::CON;
+    EEPROM().addr = addr;
+    EEPROM().cmd &= ~(EEPROM::CMD::XE | EEPROM::CMD::YE | EEPROM::CMD::SE | EEPROM::CMD::MAS1 |
                        EEPROM::CMD::ERASE | EEPROM::CMD::NVSTR | EEPROM::CMD::PROG);
-    EEPROM(0).cmd |= EEPROM::CMD::XE | EEPROM::CMD::ERASE  | EEPROM::CMD::IFREN((flag & INFO) ? 1 : 0);
+    EEPROM().cmd |= EEPROM::CMD::XE | EEPROM::CMD::ERASE  | EEPROM::CMD::IFREN((flag & INFO) ? 1 : 0);
 //    MDR_EEPROM->KEY = FLASH_PROG_KEY;
 //    MDR_EEPROM->CMD |= EEPROM_CMD_CON;
 //    MDR_EEPROM->ADR = addr;
@@ -23,7 +23,7 @@ void eeprom::erase_page_sector(uint32_t addr, uint32_t flag)
 //                         EEPROM_CMD_ERASE | EEPROM_CMD_NVSTR | EEPROM_CMD_PROG);
 //    MDR_EEPROM->CMD |= EEPROM_CMD_XE | EEPROM_CMD_ERASE  | ((flag & INFO) ? EEPROM_CMD_IFREN : 0);
     systick::wait(systick::nsec(FLASH_PROG_TNVS, FLASH_PROG_FREQ));
-    EEPROM(0).cmd |= EEPROM::CMD::NVSTR;
+    EEPROM().cmd |= EEPROM::CMD::NVSTR;
 //    MDR_EEPROM->CMD |= EEPROM_CMD_NVSTR;
     systick::wait(systick::nsec(FLASH_PROG_TME, FLASH_PROG_FREQ));
     /*
@@ -34,13 +34,13 @@ void eeprom::erase_page_sector(uint32_t addr, uint32_t flag)
     __disable_irq();
     systick::begin();
      */
-    EEPROM(0).cmd &= ~EEPROM::CMD::ERASE;
+    EEPROM().cmd &= ~EEPROM::CMD::ERASE;
 //    MDR_EEPROM->CMD &= ~EEPROM_CMD_ERASE;
     systick::wait(systick::nsec(FLASH_PROG_TNVH1, FLASH_PROG_FREQ));
-    EEPROM(0).cmd &= ~(EEPROM::CMD::XE | EEPROM::CMD::NVSTR);
+    EEPROM().cmd &= ~(EEPROM::CMD::XE | EEPROM::CMD::NVSTR);
 //    MDR_EEPROM->CMD &= ~(EEPROM_CMD_XE | EEPROM_CMD_NVSTR);
     systick::wait(systick::nsec(FLASH_PROG_TREV, FLASH_PROG_FREQ));
-    EEPROM(0).cmd = cmd;
+    EEPROM().cmd = cmd;
 //    MDR_EEPROM->CMD = cmd;
     systick::wait(systick::nsec(FLASH_PROG_TME, FLASH_PROG_FREQ));
     lk::systick::end();
@@ -62,22 +62,22 @@ uint32_t eeprom::addr_next(uint32_t addr)
 
 void eeprom::addr_xe_set(uint32_t addr)
 {
-    EEPROM(0).addr = addr;
+    EEPROM().addr = addr;
 //    MDR_EEPROM->ADR = addr;
-    EEPROM(0).cmd |= EEPROM::CMD::XE | EEPROM::CMD::PROG;
+    EEPROM().cmd |= EEPROM::CMD::XE | EEPROM::CMD::PROG;
 //    MDR_EEPROM->CMD |= EEPROM_CMD_XE | EEPROM_CMD_PROG;
     systick::wait(systick::nsec(FLASH_PROG_TNVS, FLASH_PROG_FREQ));
-    EEPROM(0).cmd |= EEPROM::CMD::NVSTR;
+    EEPROM().cmd |= EEPROM::CMD::NVSTR;
 //    MDR_EEPROM->CMD |= EEPROM_CMD_NVSTR;
     systick::wait(systick::nsec(FLASH_PROG_TPGS, FLASH_PROG_FREQ));
 }
 
 void eeprom::addr_xe_reset(void)
 {
-    EEPROM(0).cmd &= ~EEPROM::CMD::PROG;
+    EEPROM().cmd &= ~EEPROM::CMD::PROG;
 //    MDR_EEPROM->CMD &= ~EEPROM_CMD_PROG;
     systick::wait(systick::nsec(FLASH_PROG_TNVH, FLASH_PROG_FREQ));
-    EEPROM(0).cmd &= ~(EEPROM::CMD::XE | EEPROM::CMD::NVSTR);
+    EEPROM().cmd &= ~(EEPROM::CMD::XE | EEPROM::CMD::NVSTR);
 //    MDR_EEPROM->CMD &= ~(EEPROM_CMD_XE | EEPROM_CMD_NVSTR);
 }
 
