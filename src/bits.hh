@@ -55,11 +55,11 @@ public:
 
 class Bit {
 public:
-    BitAttr bitfield;
     uint32_t value;
+    BitAttr bitfield;
     //constexpr Bit1(const uint32_t position, const uint32_t length, const uint32_t value = 0) : bitfield(position, length), value(value){ }
-    constexpr Bit(const BitAttr bitfield, const Bit value) : bitfield(value.bitfield), value(value.value){}
-    constexpr Bit(const BitAttr bitfield, const uint32_t value = 0) : bitfield(bitfield), value(value){}
+    constexpr Bit(const BitAttr bitfield, const Bit value) : value(value.value), bitfield(value.bitfield){}
+    constexpr Bit(const BitAttr bitfield, const uint32_t value = 0) : value(value), bitfield(bitfield){}
     template<typename T> constexpr Bit operator| (T x) const {return Bit(BitAttr(0, 32), bits() | Bit(BitAttr(0, 32), x).bits());}
     template<typename T> constexpr Bit operator& (T x) const {return Bit(BitAttr(0, 32), bits() & Bit(BitAttr(0, 32), x).bits());}
     template<typename T> constexpr Bit operator^ (T x) const {return Bit(BitAttr(0, 32), bits() ^ Bit(BitAttr(0, 32), x).bits());}
@@ -80,6 +80,7 @@ constexpr int operator^ (int y, Bit x) {return y ^ x.value;}
 
 
 #define BITDEF(name, bitfield, value) static constexpr auto name = Bit(bitfield, value)
+template <typename T> class Reg;
 
 class RegMap{
 public:
@@ -120,6 +121,9 @@ public:
         return *dev;
 //        return reinterpret_cast<uint32_t*> (offset)[0];
     }
+    template<typename U> explicit operator Reg<U>() {
+        return Reg<U>(int());
+    }
 };
 
 template <typename T, int N>  struct array{
@@ -132,12 +136,20 @@ template <typename T, int N>  struct array{
 template <typename T> class Reg {
 public:
     T x;
+    Reg() {}
+    template<typename U> Reg(U y) {
+        x = int(y);
+    }
+    template<typename U> Reg(U &y) {
+        x = int(y);
+    }
     T operator=(Bit y) {return x = (T) y;}
     T operator=(T y) {return x = (T) y;}
     T operator=(void *y) {return x = reinterpret_cast<T>(y);}
     T operator=(volatile void *y) {return x = reinterpret_cast<T>(y);}
     template<typename U> T operator=(U y) {return x = reinterpret_cast<T>(y);}
     T operator=(RegMap y) {return x = int(y);}
+    T operator=(RegMap &y) {return x = int(y);}
     constexpr explicit operator int() {return x;}
     constexpr explicit operator long int() {return x;}
     constexpr int operator==(Bit y) {return y.value == (x & y.mask());}

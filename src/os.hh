@@ -117,15 +117,7 @@ public:
 			v = SysTick->VAL;
 		}
 	}
-	static void wait(uint32_t tick)
-	__attribute__ ((noinline))
-	__attribute__ ((__section__(".data")))
-	{
-		SysTick->LOAD = tick;
-		SysTick->VAL = 0;
-		SysTick->CTRL = SysTick_CTRL_ENABLE_Msk | SysTick_CTRL_CLKSOURCE_Msk;
-		while(!(SysTick->CTRL & SysTick_CTRL_COUNTFLAG_Msk));
-	}
+    static void wait(uint32_t tick)__attribute__ ((noinline)) __attribute__ ((__section__(".data")));
 
 	static inline uint32_t get() {
 		return SysTick->VAL;

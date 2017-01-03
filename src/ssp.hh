@@ -10,7 +10,6 @@ BaseAddr constexpr SSPBase (int i) {
 
 class SSP_ {
 public:
-
     struct CR0{
         BITDEF(SCR, BitAttr(8,8), 0);
         BITDEF(SPH, BitAttr(7,1), 1);
