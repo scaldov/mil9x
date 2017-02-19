@@ -1,6 +1,4 @@
-#ifndef ADC_HH
-#define ADC_HH
-
+#pragma once
 #include "hw.hh"
 #include "os.hh"
 
@@ -106,4 +104,4 @@ public:
 
 #define ADC12 ADC(0)
 
-#endif // ADC_HH
+//#endif // ADC_HH
