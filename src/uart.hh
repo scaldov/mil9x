@@ -11,7 +11,6 @@ BaseAddr constexpr UartBase (int i) {
 
 class UART_ {
 public:
-
     struct DR{
         BITDEF(OE, BitAttr(11,1), 1);
         BITDEF(BE, BitAttr(10,1), 1);

@@ -1,6 +1,4 @@
-#ifndef __hw_h__
-#define __hw_h__
-
+#pragma once
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -39,7 +37,11 @@ extern size_t xFreeBytesRemaining;
 }
 #endif
 
-typedef uint32_t BaseAddr;
+//align value by power of two
+constexpr uint32_t Align(uint32_t value, int power2) {
+    return (value + (1 << power2) - 1) & ~((1 << power2) - 1);
+}
+
 
 #include "bits.hh"
 #include "rst.hh"
@@ -48,5 +50,3 @@ typedef uint32_t BaseAddr;
 #include "timer.hh"
 #include "ssp.hh"
 #include "port.hh"
-
-#endif
