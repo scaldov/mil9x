@@ -58,7 +58,7 @@ public:
 		vTaskStartScheduler();
 	}
 	static size_t get_free_mem() {
-        size_t mem = 0, size, delta = 1 << 16;
+		size_t mem = 0, size, delta = 1 << 16;
 		void *p;
 		size = delta;
 		do {
@@ -91,8 +91,8 @@ public:
 	// guaranteed up to 100ms @ 128MHz on integers
 	static constexpr uint32_t nsec(uint32_t ns, const uint32_t coreclk){
 //		return (uint32_t)((double)coreclk * (double)ns / 1e9);
-        return (ns < 100000) ? ((uint64_t)coreclk / 1000000) * (uint64_t)ns / 1000 :
-                ((uint64_t)coreclk / 1000000) * ((uint64_t)ns / 1000);
+		return (ns < 100000) ? (coreclk / 1000000) * ns / 1000 :
+				(coreclk / 1000000) * (ns / 1000);
 	}
 	static int wait_mark(uint32_t tick) {
 		__disable_irq();
@@ -117,24 +117,18 @@ public:
 			v = SysTick->VAL;
 		}
 	}
-    static void wait(uint32_t tick) {
-        SysTick->LOAD = tick;
-        SysTick->VAL = 0;
-        SysTick->CTRL = SysTick_CTRL_ENABLE_Msk | SysTick_CTRL_CLKSOURCE_Msk;
-        while(!(SysTick->CTRL & SysTick_CTRL_COUNTFLAG_Msk));
-    }
+    static void wait(uint32_t tick)__attribute__ ((noinline)) __attribute__ ((__section__(".data")));
 
 	static inline uint32_t get() {
 		return SysTick->VAL;
 	}
-    static void begin(){
-        systick_ctrl = SysTick->CTRL;
-        SysTick->LOAD = 0xFFFFFF;
-        SysTick->VAL = 0;
-        SysTick->CTRL = SysTick_CTRL_ENABLE_Msk | SysTick_CTRL_CLKSOURCE_Msk;
-    }
-
-    static inline void end() {
+	static void begin() {
+		systick_ctrl = SysTick->CTRL;
+		SysTick->LOAD = 0xFFFFFF;
+		SysTick->VAL = 0;
+		SysTick->CTRL = SysTick_CTRL_ENABLE_Msk | SysTick_CTRL_CLKSOURCE_Msk;
+	}
+	static inline void end() {
 		SysTick->CTRL = systick_ctrl;
 	}
 };

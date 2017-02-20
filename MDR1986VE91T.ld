@@ -115,6 +115,7 @@ SECTIONS
 		__data_start__ = .;
 		*(vtable)
 		*(.data*)
+
 		. = ALIGN(4);
 		/* init_array/fini_array moved to flash, align preserved */
 		
@@ -122,7 +123,20 @@ SECTIONS
 		. = ALIGN(4);
 		/* All data end */
 		__data_end__ = .;
+
 	} > RAM
+	
+	/* RAM functions */
+	__exec_mem__ = __etext + SIZEOF(.data);
+	EXECUTABLE_MEMORY_SECTION : AT (__exec_mem__)
+	{
+		. = ALIGN(4);
+		__exec_mem_start__ = .;
+		*(EXECUTABLE_MEMORY_SECTION*)
+		. = ALIGN(4);
+		__exec_mem_end__ = .;
+	} > RAM
+
 	.bss :
 	{
 		. = ALIGN(4);

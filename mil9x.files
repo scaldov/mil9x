@@ -216,4 +216,3 @@ src/timer.hh
 src/uart.hh
 src/usart.cc
 src/usart.hh
-src/murmur3.hh

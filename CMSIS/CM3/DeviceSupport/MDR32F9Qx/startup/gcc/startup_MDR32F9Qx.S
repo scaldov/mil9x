@@ -141,6 +141,13 @@ Reset_Handler:
 
     bl     copy_to_ram
 
+/* Copy RAM functions from FLASH to RAM */
+    ldr    r1, =__exec_mem__
+    ldr    r2, =__exec_mem_start__
+    ldr    r3, =__exec_mem_end__
+
+    bl     copy_to_ram
+
 #ifdef __STARTUP_CLEAR_BSS
 /*     This part of work usually is done in C library startup code. Otherwise,
  *     define this macro to enable it in this startup.

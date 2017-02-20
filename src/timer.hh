@@ -1,4 +1,5 @@
-#pragma once
+#ifndef TIMER_HH
+#define TIMER_HH
 
 #include "hw.hh"
 #include "os.hh"
@@ -298,3 +299,6 @@ public:
     array<array<RegMap, 2>, 4> ccr;
     array<array<RegMap, 3>, 4> chCntrl;
 };
+
+
+#endif

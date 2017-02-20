@@ -1,4 +1,5 @@
-#pragma once
+#ifndef PORT_HH
+#define PORT_HH
 
 #include "hw.hh"
 #include "os.hh"
@@ -109,10 +110,10 @@ public:
         constexpr uint32_t func() {return (value >> 1) & 0b11;}
         constexpr uint32_t oe() {return (value >> 0) & 0b1;}
     };
-    static void config(Conf & conf) {
+    static void Config(Conf const &conf) {
         int pin = conf.pin();
         uint32_t mask = 0b1 << pin;
-        Reg32 t; //temporary register value
+        Reg<uint32_t> t; //temporary register value
         t = Port(conf.port()).oe;
         Port(conf.port()).oe = (t & ~mask) | (conf.oe() ? mask : 0);
 //        PortX(conf.port()).oe = ((int)PortX(conf.port()).oe & ~mask) | (conf.oe() ? mask : 0);
@@ -128,10 +129,6 @@ public:
         Port(conf.port()).pwr = (t & ~(0b11 << (pin * 2))) | (conf.pwr() << (pin * 2));
         t = Port(conf.port()).gfEn;
         Port(conf.port()).gfEn = (t & ~mask) | (conf.gf() ? mask : 0);
-    }
-    static void Config(Conf conf) {
-        Conf cnf(conf);
-        config(cnf);
     }
 //    static void Config1(Conf const &conf) {
 //        int pin = conf.pin();
@@ -504,3 +501,5 @@ struct IOConf : IOConf_{
 
 //static auto SSP1 = SSP(0);
 //using alias SSP1 = SSP(0);
+
+#endif // PORT_HH

@@ -36,10 +36,10 @@ class cpu{
 public:
     cpu() {}
     static void cpuclk() {
-        RST::hsControl = RST::HsControl::HseOn;
-        RST::pllControl = RST::PllControl::PllCpuOn | RST::PllControl::PllUsbOn | RST::PllControl::PllCpuRld | RST::PllControl::PllUsbRld |
-                RST::PllControl::PllCpuMul(16 - 1) | RST::PllControl::PllUsbMul(6 - 1);
-        RST::cpuClock = RST::CpuClock::CpuC2Sel::PllCpu | RST::CpuClock::CpuC3Sel::CpuC2 | RST::CpuClock::HclkSel::CpuC3;
+        RST().hsControl = RST::HsControl::HseOn;
+        RST().pllControl = RST::PllControl::PllCpuOn | RST::PllControl::PllUsbOn | RST::PllControl::PllCpuRld | RST::PllControl::PllUsbRld |
+                RST::PllControl::PllCpuMul(16 - 1) | RST::PllControl::PllUsbMul(16 - 1);
+        RST().cpuClock = RST::CpuClock::CpuC2Sel::PllCpu | RST::CpuClock::CpuC3Sel::CpuC2 | RST::CpuClock::HclkSel::CpuC3;
         SystemCoreClock = HSE_VALUE * 16;
     }
 };

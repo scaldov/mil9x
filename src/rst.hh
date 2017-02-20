@@ -1,4 +1,5 @@
-#pragma once
+#ifndef RST_HH
+#define RST_HH
 
 #include "hw.hh"
 #include "os.hh"
@@ -158,23 +159,15 @@ public:
         BITDEF(DAC, BitAttr(18,1), 1);
         BITDEF(Comp, BitAttr(19,1), 1);
         BITDEF(SPI2, BitAttr(20,1), 1);
-        struct Port {
-            BITDEF(A, BitAttr(21,1), 1);
-            BITDEF(B, BitAttr(22,1), 1);
-            BITDEF(C, BitAttr(23,1), 1);
-            BITDEF(D, BitAttr(24,1), 1);
-            BITDEF(E, BitAttr(25,1), 1);
-            BITDEF(F, BitAttr(29,1), 1);
-        };
-//        BITDEF(PortA, BitAttr(21,1), 1);
-//        BITDEF(PortB, BitAttr(22,1), 1);
-//        BITDEF(PortC, BitAttr(23,1), 1);
-//        BITDEF(PortD, BitAttr(24,1), 1);
-//        BITDEF(PortE, BitAttr(25,1), 1);
+        BITDEF(PortA, BitAttr(21,1), 1);
+        BITDEF(PortB, BitAttr(22,1), 1);
+        BITDEF(PortC, BitAttr(23,1), 1);
+        BITDEF(PortD, BitAttr(24,1), 1);
+        BITDEF(PortE, BitAttr(25,1), 1);
 //        BITDEF(, BitAttr(26,1), 1);
         BITDEF(BKP, BitAttr(27,1), 1);
 //        BITDEF(, BitAttr(28,1), 1);
-//        BITDEF(PortF, BitAttr(29,1), 1);
+        BITDEF(PortF, BitAttr(29,1), 1);
         BITDEF(ExtBus, BitAttr(30,1), 1);
 //        BITDEF(, BitAttr(31,1), 1);
     };
@@ -296,54 +289,38 @@ public:
     };
 };
 
-
 class RST : public RST_ {
 public:
-    static constexpr auto clockStatus = ConstRegMap(RSTBase(0) + 0x00);
-    static constexpr auto pllControl = ConstRegMap(RSTBase(0) + 0x04);
-    static constexpr auto hsControl = ConstRegMap(RSTBase(0) + 0x08);
-    static constexpr auto cpuClock = ConstRegMap(RSTBase(0) + 0x0c);
-    static constexpr auto usbClock = ConstRegMap(RSTBase(0) + 0x10);
-    static constexpr auto adcMcoClock = ConstRegMap(RSTBase(0) + 0x14);
-    static constexpr auto rtcClock = ConstRegMap(RSTBase(0) + 0x18);
-    static constexpr auto perClock = ConstRegMap(RSTBase(0) + 0x1c);
-    static constexpr auto canClock = ConstRegMap(RSTBase(0) + 0x20);
-    static constexpr auto timClock = ConstRegMap(RSTBase(0) + 0x24);
-    static constexpr auto uartClock = ConstRegMap(RSTBase(0) + 0x28);
-    static constexpr auto sspClock = ConstRegMap(RSTBase(0) + 0x2c);
+    uint32_t baseAddr;
+    RST(BaseAddr base) : baseAddr(base) {
+        clockStatus = RegMap(baseAddr + 0x00);
+        pllControl = RegMap(baseAddr + 0x04);
+        hsControl = RegMap(baseAddr + 0x08);
+        cpuClock = RegMap(baseAddr + 0x0c);
+        usbClock = RegMap(baseAddr + 0x10);
+        adcMcoClock = RegMap(baseAddr + 0x14);
+        rtcClock = RegMap(baseAddr + 0x18);
+        perClock = RegMap(baseAddr + 0x1c);
+        canClock = RegMap(baseAddr + 0x20);
+        timClock = RegMap(baseAddr + 0x24);
+        uartClock = RegMap(baseAddr + 0x28);
+        sspClock = RegMap(baseAddr + 0x2c);
+    }
+    RST(int base = 0) : RST(RSTBase(base)) {}
+    RegMap clockStatus;
+    RegMap pllControl;
+    RegMap hsControl;
+    RegMap cpuClock;
+    RegMap usbClock;
+    RegMap adcMcoClock;
+    RegMap rtcClock;
+    RegMap perClock;
+    RegMap canClock;
+    RegMap timClock;
+    RegMap uartClock;
+    RegMap sspClock;
 };
 
-////Variant for dynamic HW block
-//class RST : public RST_ {
-//public:
-//    uint32_t baseAddr;
-//    RST(BaseAddr base) : baseAddr(base) {
-//        clockStatus = RegMap(baseAddr + 0x00);
-//        pllControl = RegMap(baseAddr + 0x04);
-//        hsControl = RegMap(baseAddr + 0x08);
-//        cpuClock = RegMap(baseAddr + 0x0c);
-//        usbClock = RegMap(baseAddr + 0x10);
-//        adcMcoClock = RegMap(baseAddr + 0x14);
-//        rtcClock = RegMap(baseAddr + 0x18);
-//        perClock = RegMap(baseAddr + 0x1c);
-//        canClock = RegMap(baseAddr + 0x20);
-//        timClock = RegMap(baseAddr + 0x24);
-//        uartClock = RegMap(baseAddr + 0x28);
-//        sspClock = RegMap(baseAddr + 0x2c);
-//    }
-//    RST(int base = 0) : RST(RSTBase(base)) {}
-//    RegMap clockStatus;
-//    RegMap pllControl;
-//    RegMap hsControl;
-//    RegMap cpuClock;
-//    RegMap usbClock;
-//    RegMap adcMcoClock;
-//    RegMap rtcClock;
-//    RegMap perClock;
-//    RegMap canClock;
-//    RegMap timClock;
-//    RegMap uartClock;
-//    RegMap sspClock;
-//};
-
 #define ADC12 ADC(0)
+
+#endif // RST_HH

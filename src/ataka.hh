@@ -9,15 +9,6 @@
 
 #include <string.h>
 
-typedef struct{
-    uint32_t stat;
-    uint32_t adc2l;
-    uint32_t adc2h;
-    uint32_t tmr1;
-} dma_stat;
-
-extern dma_stat dma_log[32];
-
 extern lk::pin led4;
 
 /*
@@ -186,6 +177,7 @@ public:
         port.PORT_PULL_DOWN = PORT_PULL_DOWN_OFF;
         port.PORT_PD = PORT_PD_DRIVER;
         PORT_Init(MDR_PORTD, &port);
+//        IOConf::Config1(IOConf::SSP1::MISO::B14);
         IOConf::Config(IOConf::SSP1::RX::B14);
         //enable SSP and disable their DMA requests due to error
         MDR_RST_CLK->PER_CLOCK |= (RST_CLK_PCLK_SSP1 | RST_CLK_PCLK_SSP2);
@@ -200,12 +192,12 @@ public:
                 RST_CLK_ADC_MCO_CLOCK_ADC_CLK_EN;
         ADC12.chSel[0] = 0b11000000000000000000000000000000;
         ADC12.chSel[1] = 0b00000000000000001111111111111111;
-        ADC12.cfg[0] = ADC::CFG1::Go | ADC::CFG1::ClkS | ADC::CFG1::Sample |
-                ADC::CFG1::ChCh | ADC::CFG1::TSEn | ADC::CFG1::TSBufEn | ADC::CFG1::SelTS |
-                ADC::CFG1::DelayGo(1) | ADC::CFG1::DelayAdc(1) | ADC::CFG1::DivClk::HCLK16;
-        ADC12.cfg[1] = ADC::CFG2::Go | ADC::CFG2::ClkS | ADC::CFG2::Sample |
-                ADC::CFG2::ChCh | ADC::CFG2::ADC1OP | ADC::CFG2::ADC2OP |
-                ADC::CFG2::DelayGo(1) | ADC::CFG2::DivClk::HCLK16;
+        ADC12.cfg[0] = ADC_::CFG1::Go | ADC_::CFG1::ClkS | ADC_::CFG1::Sample |
+                ADC_::CFG1::ChCh | ADC_::CFG1::TSEn | ADC_::CFG1::TSBufEn | ADC_::CFG1::SelTS |
+                ADC_::CFG1::DelayGo(1) | ADC_::CFG1::DelayAdc(1) | ADC_::CFG1::DivClk::HCLK16;
+        ADC12.cfg[1] = ADC_::CFG2::Go | ADC_::CFG2::ClkS | ADC_::CFG2::Sample |
+                ADC_::CFG2::ChCh | ADC_::CFG2::ADC1OP | ADC_::CFG2::ADC2OP |
+                ADC_::CFG2::DelayGo(1) | ADC_::CFG2::DivClk::HCLK16;
         //initialize DMA
         MDR_RST_CLK->PER_CLOCK |= RST_CLK_PCLK_DMA;
         DMA().chnUseBurstSet = ~0;
@@ -234,20 +226,20 @@ public:
         //primary
         DMA().controlTable[0][DMA::Chn::ADC1].control = dmaADCConfig | DMA::Ctrl::NMinus1(32 - 1);
         DMA().controlTable[0][DMA::Chn::ADC1].dstEndPtr = (uint8_t*)dma_adc1_bfr_lo + (32 - 1) * 4;
-        DMA().controlTable[0][DMA::Chn::ADC1].srcEndPtr = &ADC12.result[0];
+        DMA().controlTable[0][DMA::Chn::ADC1].srcEndPtr = &MDR_ADC->ADC1_RESULT;
         //alternative
         DMA().controlTable[1][DMA::Chn::ADC1].control = dmaADCConfig | DMA::Ctrl::NMinus1(32 - 1);
         DMA().controlTable[1][DMA::Chn::ADC1].dstEndPtr = (uint8_t*)dma_adc1_bfr_hi + (32 - 1) * 4;
-        DMA().controlTable[1][DMA::Chn::ADC1].srcEndPtr = &ADC12.result[0];
+        DMA().controlTable[1][DMA::Chn::ADC1].srcEndPtr = &MDR_ADC->ADC1_RESULT;
         //ADC2
         //primary
         DMA().controlTable[0][DMA::Chn::ADC2].control = dmaADCConfig | DMA::Ctrl::NMinus1(32 - 1);
         DMA().controlTable[0][DMA::Chn::ADC2].dstEndPtr = (uint8_t*)dma_adc2_bfr_lo + (32 - 1) * 4;
-        DMA().controlTable[0][DMA::Chn::ADC2].srcEndPtr = &ADC12.result[1];
+        DMA().controlTable[0][DMA::Chn::ADC2].srcEndPtr = &MDR_ADC->ADC2_RESULT;
         //alternative
         DMA().controlTable[1][DMA::Chn::ADC2].control = dmaADCConfig | DMA::Ctrl::NMinus1(32 - 1);
         DMA().controlTable[1][DMA::Chn::ADC2].dstEndPtr = (uint8_t*)dma_adc2_bfr_hi + (32 - 1) * 4;
-        DMA().controlTable[1][DMA::Chn::ADC2].srcEndPtr = &ADC12.result[1];
+        DMA().controlTable[1][DMA::Chn::ADC2].srcEndPtr = &MDR_ADC->ADC2_RESULT;
         //
         DMA().chnUseBurstClr = (1<<DMA::Chn::ADC1) | (1<<DMA::Chn::ADC2) | (1<<DMA::Chn::TIM1);
         DMA().chnReqMaskClr = (1<<DMA::Chn::ADC1) | (1<<DMA::Chn::ADC2) | (1<<DMA::Chn::TIM1);
@@ -255,12 +247,6 @@ public:
         DMA().chnPriAltClr = (1<<DMA::Chn::ADC1) | (1<<DMA::Chn::ADC2) | (1<<DMA::Chn::TIM1);
         DMA().chnPrioritySet = (1<<DMA::Chn::ADC1) | (1<<DMA::Chn::ADC2) | (1<<DMA::Chn::TIM1);
         dma_enable_channel = (1<<DMA::Chn::ADC1) | (1<<DMA::Chn::ADC2) | (1<<DMA::Chn::TIM1);
-        //
-        dma_log[0].stat = (1<<DMA::Chn::ADC1) | (1<<DMA::Chn::ADC2) | (1<<DMA::Chn::TIM1);
-        dma_log[0].adc2l = (int)DMA().controlTable[0][DMA::Chn::ADC2].control;
-        dma_log[0].adc2h = (int)DMA().controlTable[1][DMA::Chn::ADC2].control;
-        dma_log[0].tmr1 = (int)DMA().controlTable[0][DMA::Chn::TIM1].control;
-        //
         //initialize timer to feed DMA
         //timer 1
         MDR_RST_CLK->PER_CLOCK |= RST_CLK_PCLK_TIMER1;
@@ -288,10 +274,9 @@ public:
         NVIC_ClearPendingIRQ(DMA_IRQn);
         NVIC_SetPriority(DMA_IRQn, configMAX_SYSCALL_INTERRUPT_PRIORITY - 1);
         NVIC_EnableIRQ(DMA_IRQn);
-        __enable_irq();
         DMA().cfg |= DMA::Cfg::MasterEnable;
-        ADC12.cfg[0] |= ADC::CFG1::AdOn;
-        ADC12.cfg[1] |= ADC::CFG2::AdOn;
+        ADC12.cfg[0] |= ADC_::CFG1::AdOn;
+        ADC12.cfg[1] |= ADC_::CFG2::AdOn;
     }
     void send(uint32_t *bfr, int cnt) {
         xSemaphoreTake(sem_res , portMAX_DELAY);

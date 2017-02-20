@@ -1,4 +1,5 @@
-#pragma once
+#ifndef SSP_HH
+#define SSP_HH
 
 #include "hw.hh"
 #include "os.hh"
@@ -84,3 +85,5 @@ public:
 
 //#define SSP1 SSPX(MDR_SSP1_BASE)
 //#define SSP2 SSPX(MDR_SSP2_BASE)
+
+#endif // SSP_HH

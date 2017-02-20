@@ -83,8 +83,8 @@ OBJ := $(OBJ:%=$(BUILD_DIR)/%)
 INCLUDES   := $(INCLUDE_FOLDERS:%=-I%)
 DEFINES := $(DEFINE:%=-D%)
 
-CC_FLAGS  = -g -ggdb $(INCLUDES) -I. -O$(OPTIMIZATION) -Wall -std=gnu99 -c -fmessage-length=0 $(MCU_CC) -fdata-sections -ffunction-sections -fno-hosted -fno-builtin -nostdlib -nodefaultlibs -fno-strict-aliasing -save-temps
-CXX_FLAGS  = -g -ggdb $(INCLUDES) -I. -O$(OPTIMIZATION) -Wall -std=gnu++11 -c -fmessage-length=0 $(MCU_CC) -fdata-sections -ffunction-sections -fno-builtin -nostdlib -fno-strict-aliasing -fno-rtti -fno-threadsafe-statics -fno-exceptions -save-temps
+CC_FLAGS  = -g -ggdb $(INCLUDES) -I. -O$(OPTIMIZATION) -Wall -std=gnu99 -c -fmessage-length=0 $(MCU_CC) -fdata-sections -ffunction-sections -fno-hosted -fno-builtin -nostdlib -nodefaultlibs -fno-strict-aliasing
+CXX_FLAGS  = -g -ggdb $(INCLUDES) -I. -O$(OPTIMIZATION) -Wall -std=gnu++11 -c -fmessage-length=0 $(MCU_CC) -fdata-sections -ffunction-sections -fno-builtin -nostdlib -fno-strict-aliasing -fno-rtti -fno-threadsafe-statics -fno-exceptions
 AS_FLAGS  = $(MCU)
 #no semihosting
 #LD_SYS_LIBS = -lm -lc -lgcc -lnosys

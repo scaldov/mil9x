@@ -1,4 +1,5 @@
-#pragma once
+#ifndef __DMA_HH__
+#define __DMA_HH__
 
 #include "hw.hh"
 #include "os.hh"
@@ -130,7 +131,13 @@ public:
         BITDEF(NextUseBurst, BitAttr(3,1), 1);
         static constexpr auto bfCycle = BitAttr(0,3);
         struct Cycle{
-            BITDEF(Stop, bfCycle, 0b000);
+            BITDEF(Stop, bfCycle, 0b000);    struct ControlData{
+                Reg<uint32_t> srcEndPtr;
+                Reg<uint32_t> dstEndPtr;
+                Reg<uint32_t> control;
+                uint32_t unused;
+            };
+
             BITDEF(Basic, bfCycle, 0b001);
             BITDEF(AutoReq, bfCycle, 0b010);
             BITDEF(PingPong, bfCycle, 0b011);
@@ -148,11 +155,12 @@ public:
         TIM1, TIM2, TIM3
     };
     struct ControlData{
-        Reg32 srcEndPtr;
-        Reg32 dstEndPtr;
-        Reg32 control;
+        Reg<uint32_t> srcEndPtr;
+        Reg<uint32_t> dstEndPtr;
+        Reg<uint32_t> control;
         uint32_t unused;
     };
+    static ControlData controlTable[1 + DMA_ALTERNATE_DATA][DMA_ALIGN / sizeof(ControlData)] __attribute__((aligned(DMA_ALIGN * 2)));
 };
 
 class DMA : public DMA_{
@@ -195,5 +203,6 @@ public:
     RegMap chnPrioritySet;
     RegMap chnPriorityClr;
     RegMap errClr;
-    static ControlData controlTable[1 + DMA_ALTERNATE_DATA][DMA_ALIGN / sizeof(ControlData)] __attribute__((aligned(DMA_ALIGN * 2)));
 };
+
+#endif // __DMA_HH__
